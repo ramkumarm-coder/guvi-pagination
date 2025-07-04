@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pagination</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        .pagination {
+            display: flex;
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .pagination li {
+            margin: 0 3px;
+        }
+
+        .pagination button {
+            padding: 6px 12px;
+            border: 1px solid #ccc;
+            background-color: white;
+            cursor: pointer;
+            color: #007bff;
+        }
+
+        .pagination button.active {
+            background-color: #007bff;
+            color: white;
+            font-weight: bold;
+        }
+
+        .pagination button:disabled {
+            background-color: #f2f2f2;
+            cursor: not-allowed;
+        }
+
+        #title {
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <h1 id="title">Pagination in DOM Manipulation</h1>
+    <p id="description">DOM Pagination Task</p>
+    <h4 id="changeText">change : 1</h4>
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped" id="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <div id="buttons" class="d-flex justify-content-center">
+        <ul class="pagination" id="pagination">
+
+        </ul>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q"
+        crossorigin="anonymous"></script>
+    <script src="https://app.zenclass.in/sheets/v1/js/zen/suite/bundle.js"></script>
+    <script>
+        const url = 'https://raw.githubusercontent.com/Rajavasanthan/jsondata/master/pagenation.json';
+        const rowsPerPage = 10;
+        let currentPage = 1;
+        let data = [];
+
+        const tableBody = document.querySelector("#table tbody");
+        const paginationContainer = document.getElementById("pagination");
+        const changeText = document.getElementById("changeText");
+
+        async function fetchData() {
+            try {
+                const res = await fetch(url);
+                data = await res.json();
+                displayTable(currentPage);
+                setupPagination();
+            } catch (error) {
+                tableBody.innerHTML = `<tr><td colspan="3">Error loading data</td></tr>`;
+                console.error("Fetch Error:", error);
+            }
+        }
+
+        function displayTable(page) {
+            tableBody.innerHTML = "";
+
+            const start = (page - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+            const pageData = data.slice(start, end);
+
+            pageData.forEach(item => {
+                const row = `<tr>
+                    <td>${item.id}</td>
+                    <td>${item.name}</td>
+                    <td>${item.email}</td>
+                  </tr>`;
+                tableBody.innerHTML += row;
+            });
+
+            changeText.innerText = `change : ${page}`;
+        }
+
+        function setupPagination() {
+            const totalPages = Math.ceil(data.length / rowsPerPage);
+            paginationContainer.innerHTML = "";
+
+            const createButton = (text, page, disabled = false, active = false) => {
+                const li = document.createElement("li");
+                const btn = document.createElement("button");
+                btn.textContent = text;
+                if (active) btn.classList.add("active");
+                if (disabled) btn.disabled = true;
+                btn.onclick = () => {
+                    currentPage = page;
+                    displayTable(currentPage);
+                    setupPagination();
+                };
+                li.appendChild(btn);
+                paginationContainer.appendChild(li);
+            };
+
+            createButton("First", 1, currentPage === 1);
+            createButton("Previous", currentPage - 1, currentPage === 1);
+
+            const visiblePages = 9;
+            let startPage = Math.max(currentPage - 4, 1);
+            let endPage = Math.min(startPage + visiblePages - 1, totalPages);
+
+            if (endPage - startPage < visiblePages - 1) {
+                startPage = Math.max(endPage - visiblePages + 1, 1);
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                createButton(i, i, false, currentPage === i);
+            }
+
+            createButton("Next", currentPage + 1, currentPage === totalPages);
+            createButton("Last", totalPages, currentPage === totalPages);
+        }
+
+        fetchData();
+    </script>
+
+</body>
+
+</html>
